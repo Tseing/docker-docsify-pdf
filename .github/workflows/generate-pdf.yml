@@ -1,4 +1,4 @@
-name: Generate PDF docs
+name: Generate and release PDF docs
 
 on:
   push:
@@ -31,13 +31,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build and export Docker image for tests
+      # Build and export Docker image for generation
       - name: Build and export to Docker
         uses: docker/build-push-action@v6
         with:
           context: .
           load: true
           tags: ${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # Generate PDF from docs
       - name: Generate PDF
@@ -57,9 +59,35 @@ jobs:
           name: career-docs-pdf
           path: pdf/*.pdf
 
+  release:
+    if: ${{ github.ref_name == 'main'}}
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - run: echo "RELEASE_TAG=$(date +"%Y.%m.%d.%H%M%S")" >> "$GITHUB_ENV"
+
+      - name: Make timestamp tag
+        uses: EndBug/latest-tag@latest
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          description: Automatic tag.
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: career-docs-pdf
+          path: pdf
+          merge-multiple: false
+
       - name: Release files
         if: ${{ github.ref_name == 'main'}}
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "pdf/*.pdf"
+          artifacts: pdf/*
+          tag: ${{ env.RELEASE_TAG }}
           prerelease: true
