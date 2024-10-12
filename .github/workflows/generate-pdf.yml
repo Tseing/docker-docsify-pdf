@@ -1,18 +1,14 @@
-name: Generate PDF docs
+name: Generate and release PDF docs
 
 on:
   push:
-    branches-ignore:
-      - 'gh-page'
-
   pull_request:
-    branches-ignore:
-      - 'gh-page'
     types:
       - 'closed'
 
 env:
   IMAGE_TAG: ${{ github.repository }}:gh-action
+  DEFAULT_BRANCH: main
 
 jobs:
   build:
@@ -31,7 +27,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build and export Docker image for tests
+      # Build and export Docker image for generation
       - name: Build and export to Docker
         uses: docker/build-push-action@v6
         with:
@@ -57,9 +53,34 @@ jobs:
           name: career-docs-pdf
           path: pdf/*.pdf
 
+  release:
+    if: ${{ github.ref_name == env.DEFAULT_BRANCH }}
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - run: echo "RELEASE_TAG=$(date +"%Y.%m.%d.%H%M%S")" >> "$GITHUB_ENV"
+
+      - name: Make timestamp tag
+        uses: EndBug/latest-tag@latest
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          description: Automatic tag and release.
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: career-docs-pdf
+          path: pdf
+          merge-multiple: false
+
       - name: Release files
-        if: ${{ github.ref_name == 'main'}}
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "pdf/*.pdf"
+          artifacts: pdf/career-docs-pdf/*
+          tag: ${{ env.RELEASE_TAG }}
           prerelease: true
