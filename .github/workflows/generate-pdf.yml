@@ -1,13 +1,17 @@
-name: Docker
+name: Generate PDF docs
 
-on: push
+on:
+  push:
+    branches-ignore:
+      - 'gh-page'
+
+  pull_request:
+    branches-ignore:
+      - 'gh-page'
+    types:
+      - 'closed'
 
 env:
-  # # Use docker.io for Docker Hub if empty
-  # REGISTRY: ghcr.io
-  # # github.repository as <account>/<repo>
-  # IMAGE_NAME: ${{ github.repository }}
-  # tests
   IMAGE_TAG: ${{ github.repository }}:gh-action
 
 jobs:
@@ -26,16 +30,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      # # Login against a Docker registry except on PR
-      # # https://github.com/docker/login-action
-      # - name: Log into registry ${{ env.REGISTRY }}
-      #   if: github.event_name != 'pull_request'
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: ${{ env.REGISTRY }}
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
 
       # Build and export Docker image for tests
       - name: Build and export to Docker
@@ -57,7 +51,15 @@ jobs:
           -e "PDF_OUTPUT_NAME=career-docs.pdf" \
           ${{ env.IMAGE_TAG }}
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload generated files
+        uses: actions/upload-artifact@v4
         with:
           name: career-docs-pdf
           path: pdf/*.pdf
+
+      - name: Release files
+        if: ${{ github.ref_name == 'main'}}
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "pdf/*.pdf"
+          prerelease: true
