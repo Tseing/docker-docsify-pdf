@@ -8,7 +8,6 @@ on:
 
 env:
   IMAGE_TAG: ${{ github.repository }}:gh-action
-  DEFAULT_BRANCH: main
 
 jobs:
   build:
@@ -54,7 +53,7 @@ jobs:
           path: pdf/*.pdf
 
   release:
-    if: ${{ github.ref_name == env.DEFAULT_BRANCH }}
+    if: ${{ github.ref_name == 'main' }}
     needs: [build]
     runs-on: ubuntu-latest
     permissions:
