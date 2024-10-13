@@ -46,6 +46,7 @@ jobs:
           -v "$(pwd)/docs:/home/node/docs:ro" \
           -v "$(pwd)/pdf:/home/node/pdf:rw" \
           -v "$(pwd)/resources/covers/cover.pdf:/home/node/resources/cover.pdf:ro" \
+          -v "$(pwd)/resources/js/:/home/node/resources/js/:rw" \
           -e "PDF_OUTPUT_NAME=career-docs.pdf" \
           ${{ env.IMAGE_TAG }}
 
