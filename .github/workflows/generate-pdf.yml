@@ -7,7 +7,8 @@ on:
       - 'closed'
 
 env:
-  IMAGE_TAG: ${{ github.repository }}:gh-action
+  # IMAGE_TAG: ${{ github.repository }}:gh-action
+  IMAGE_TAG: ghcr.io/kernoeb/docker-docsify-pdf:latest
 
 jobs:
   build:
@@ -23,16 +24,18 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v3
 
-      # Build and export Docker image for generation
-      - name: Build and export to Docker
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          load: true
-          tags: ${{ env.IMAGE_TAG }}
+      # # Build and export Docker image for generation
+      # - name: Build and export to Docker
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: .
+      #     load: true
+      #     tags: ${{ env.IMAGE_TAG }}
+
+      - run: docker pull ${{ env.IMAGE_TAG }}
 
       # Generate PDF from docs
       - name: Generate PDF
